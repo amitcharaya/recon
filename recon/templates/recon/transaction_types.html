@@ -1,0 +1,20 @@
+
+{% extends 'home.html' %}
+
+{% block sidecontent %}
+
+<div >
+
+    <div>
+        {% for txntype in txntypes %}
+            <div>
+                <a href="{% url 'update-txntype' txntype.id%}">Edit</a>
+                <a href="{% url 'delete-txntype' txntype.id%}">Delete</a>
+                <h1>{{txntype}}</h1>
+                <hr>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

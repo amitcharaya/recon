@@ -2,16 +2,31 @@
 {% extends 'main.html' %}
 
 {% block content %}
-{% for account in accounts %}
-<h1>{{account.name}}</h1>
-<h1>{{account.number}}</h1>
-{% endfor %}
+<style>
+    .home-container{
+        display:grid;
+        grid-template-columns:1fr 3fr;
+    }
+</style>
+<div class="home-container">
 
-{% for txn in transactions %}
-<h1>{{txn.txnNo}}</h1>
-<h1>{{txn.account.number}}</h1>
-<h1>{{txn.date}}</h1>
-<h1>{{txn.drTxn}}</h1>
-<h1>{{txn.crTxn}}</h1>
-{% endfor %}
+
+    <div>
+
+            <div>
+                <a href="{% url 'accounts' %}">Accounts</a>
+                <hr>
+                 <a href="{% url 'accounttypes' %}">Account Types</a>
+                <hr>
+                <a href="{% url 'transactions' %}">Transactions</a>
+                <hr>
+                <a href="{% url 'txntypes' %}">Transaction Types</a>
+            </div>
+
+    </div>
+    <div>{% block sidecontent %}
+          {% endblock %}
+    </div>
+</div>
+
 {% endblock %}

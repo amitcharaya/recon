@@ -5,6 +5,7 @@ class AccountType(models.Model):
     type=models.CharField(max_length=250)
     def __str__(self):
         return self.type
+
 class Account(models.Model):
     number=models.CharField(max_length=16)
     name=models.CharField(max_length=250)
