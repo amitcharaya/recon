@@ -18,4 +18,7 @@ urlpatterns=[
     path('txntypes/',views.txntypes, name='txntypes'),
     path('update-txntype/<str:pk>/',views.updateTxnType, name='update-txntype'),
     path('delete-txntype/<str:pk>/',views.deleteTxnType, name='delete-txntype'),
+    path('create-recondate/',views.createRecondate, name='create-recondate'),
+    path('recondashboard/',views.ReconDashboard, name='recondashboard'),
+    path('loadntslfiles/',views.loadntslfiles, name='loadntslfiles'),
 ]

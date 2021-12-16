@@ -1,0 +1,35 @@
+{% extends 'main.html' %}
+
+{% block content %}
+<div>
+    <h1>Date:- {{date}}</h1>
+    <h1>Axis Bank Balance {{axisbal|floatformat:2}}</h1>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    Acquirer
+  </div>
+  <div class="card-body">
+    <h3>Acquirer Entries As Per CBS:- {{acq|floatformat:2}} </h3>
+      <h3>Acquirer Entries as Per NTSL:- {{acqwdlntsl|floatformat:2}}</h3>
+      <h3>Acquirer Differnece:- {{acqdiff|floatformat:2}}</h3>
+  </div>
+</div>
+<div class="card">
+  <div class="card-header">
+    Issuer
+  </div>
+  <div class="card-body">
+     <h3>Issuer Entries As Per CBS:- {{issuer|floatformat:2}}</h3>
+      <h3>Issuer Entries as Per NTSL:- {{issddntsl|floatformat:2}}</h3>
+      <h3>Issuer Entries as Per RGCS:- {{issddrgcs|floatformat:2}}</h3>
+      <h3>Issuer Entries Total As per NPCI:- {{issddtotal|floatformat:2}}</h3>
+
+      <h3>Issuer Differnece:- {{issuerdiff|floatformat:2}}</h3>
+  </div>
+</div>
+
+
+
+{% endblock %}

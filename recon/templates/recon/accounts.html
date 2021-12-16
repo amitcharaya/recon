@@ -11,6 +11,8 @@
                 <a href="{% url 'update-account' account.id%}">Edit</a>
                 <a href="{% url 'delete-account' account.id%}">Delete</a>
                 <h1>{{account}}</h1>
+                <h1>{{txn}}</h1>
+                <h1>{{bal}}</h1>
                 <hr>
             </div>
         {% endfor %}
