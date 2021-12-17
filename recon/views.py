@@ -264,17 +264,31 @@ def IssuerEntriesDuringPrvDay():
 def ReconDashboard(request):
     acq=MirrorDrEntriesDuringDay()+AcquirerDrEntriesDuringDay()-AcquirerCrEntriesDuringDay()-AcquirerEntriesDuringPrvDay()
     issuer = MirrorCrEntriesDuringDay() +IssuerCrEntriesDuringDay()-IssuerDrEntriesDuringDay()-IssuerEntriesDuringPrvDay()
+    acqclbal=AcquirerDrEntriesDuringDay()-AcquirerCrEntriesDuringDay()
+    issclbal=IssuerCrEntriesDuringDay()-IssuerDrEntriesDuringDay()
     recondate = ReconDate.objects.get(id=1)
     accountType = AccountType.objects.filter(type='Mirror Account')
     account = Account.objects.filter(accountType=accountType[0])
-    clbal=clbalance(account[0].number,recondate.date)
+    axisBankBal=clbalance(account[0].number,recondate.date)
     acqwdlntsl=AcqDuringdayNTSL(recondate.date)
     issddntsl=IssuerDuringdayNTSL(recondate.date)
     issddrgcs=IssuerDuringdayRGCS(recondate.date)
     issddtotal=issddntsl+issddrgcs
     acqdiff=acq-acqwdlntsl
     issuerdiff=issuer-issddntsl-issddrgcs
-    context={'acq':acq,'issuer':issuer, 'date':recondate.date,'axisbal':clbal,"acqwdlntsl":acqwdlntsl,"acqdiff":acqdiff,"issddntsl":issddntsl,"issuerdiff":issuerdiff,"issddrgcs":issddrgcs,"issddtotal":issddtotal}
+    acqfee=AcquirerFeeTotal(recondate.date)
+    acqfeegst=AcquirerFeeGSTTotal(recondate.date)
+    issfee = IssuerFeeTotal(recondate.date)
+    issfeegst = IssuerFeeGSTTotal(recondate.date)
+    issnpciswfee=IssuerNPCIFeeTotal(recondate.date)
+    issnpciswfeegst = IssuerNPCIFeeGSTTotal(recondate.date)
+
+    othFeeAmtDr=othFeeTotalRGCS(recondate.date)
+    othFeeGSTAmtDr = othFeeGSTTotalRGCS(recondate.date)
+
+    adjustedAxisBankBal = axisBankBal + acqfee + acqfeegst - issfee - issfeegst - issnpciswfee - issnpciswfeegst + acqclbal - issclbal-othFeeAmtDr-othFeeGSTAmtDr
+
+    context={'acq':acq,'issuer':issuer, 'date':recondate.date,'axisbal':axisBankBal,"acqwdlntsl":acqwdlntsl,"acqdiff":acqdiff,"issddntsl":issddntsl,"issuerdiff":issuerdiff,"issddrgcs":issddrgcs,"issddtotal":issddtotal,"acqfee":acqfee,"acqfeegst":acqfeegst,"issfee":issfee,"issfeegst":issfeegst,"issnpciswfee":issnpciswfee,"issnpciswfeegst":issnpciswfeegst,"adjustedAxisBankBal":adjustedAxisBankBal,"acqclbal":acqclbal,"issclbal":issclbal,"othFeeAmtDr":othFeeAmtDr,"othFeeGSTAmtDr":othFeeGSTAmtDr}
 
     return render(request,'recon/recon_dashboard.html',context)
 
@@ -327,6 +341,152 @@ def IssuerDuringdayRGCS(cldate):
         (Q(cycle=1))
     ).aggregate(Sum("setAmtDr"))
     return wdl["setAmtDr__sum"]+wdl1["setAmtDr__sum"]
+
+
+def othFeeTotalRGCS(cldate):
+    statusRGCS=Status.objects.filter(
+        Q(status="A")
+    )
+    inwardOutwardObj=InwardOutward.objects.filter(
+        Q(name="INWARD")
+    )
+
+    wdl=RGCS.objects.filter(
+
+        Q(status=statusRGCS[0])&
+        Q(inwardOutward=inwardOutwardObj[0])&
+        Q(date__lte=cldate)&
+        (Q(cycle=4)|Q(cycle=3)|Q(cycle=2))
+    ).aggregate(Sum("othFeeAmtDr"))
+    wdl1 = RGCS.objects.filter(
+
+        Q(status=statusRGCS[0]) &
+        Q(inwardOutward=inwardOutwardObj[0]) &
+        Q(date__lte=cldate+timedelta(hours=24)) &
+        (Q(cycle=1))
+    ).aggregate(Sum("othFeeAmtDr"))
+    return wdl["othFeeAmtDr__sum"]+wdl1["othFeeAmtDr__sum"]
+
+def othFeeGSTTotalRGCS(cldate):
+
+    inwardOutwardObj=InwardOutward.objects.filter(
+        Q(name="INWARD GST")
+    )
+
+    wdl=RGCS.objects.filter(
+
+
+        Q(inwardOutward=inwardOutwardObj[0])&
+        Q(date__lte=cldate)&
+        (Q(cycle=4)|Q(cycle=3)|Q(cycle=2))
+    ).aggregate(Sum("othFeeGstDr"))
+    wdl1 = RGCS.objects.filter(
+
+
+        Q(inwardOutward=inwardOutwardObj[0]) &
+        Q(date__lte=cldate+timedelta(hours=24)) &
+        (Q(cycle=1))
+    ).aggregate(Sum("othFeeGstDr"))
+    return wdl["othFeeGstDr__sum"]+wdl1["othFeeGstDr__sum"]
+def AcquirerFeeTotal(cldate):
+    discrptionNTSL = Description_NTSL.objects.filter(
+        Q(description="Acquirer BI Approved Fee")|
+        Q(description="Acquirer MS Approved Fee")|
+        Q(description="Acquirer WDL Approved Fee")|
+        Q(description="Acquirer PC Approved Fee")|
+        Q(description="Acquirer WDL Approved Fee  (Micro-ATM)")
+    )
+    wdl = NTSL.objects.filter(
+        Q(description__in=discrptionNTSL) &
+        Q(date__lte=cldate)
+    ).aggregate(Sum("credit"))
+
+    return wdl["credit__sum"]
+
+def AcquirerFeeGSTTotal(cldate):
+    discrptionNTSL = Description_NTSL.objects.filter(
+        Q(description="Acquirer BI Approved Fee - GST")|
+        Q(description="Acquirer MS Approved Fee - GST")|
+        Q(description="Acquirer WDL Approved Fee - GST")|
+        Q(description="Acquirer PC Approved Fee - GST")
+
+    )
+    wdl = NTSL.objects.filter(
+        Q(description__in=discrptionNTSL) &
+        Q(date__lte=cldate)
+    ).aggregate(Sum("credit"))
+
+    return wdl["credit__sum"]
+
+def IssuerFeeTotal(cldate):
+    discrptionNTSL = Description_NTSL.objects.filter(
+        Q(description="Issuer BI Approved Fee")|
+        Q(description="Issuer MS Approved Fee")|
+        Q(description="Issuer WDL Approved Fee")|
+        Q(description="Issuer PC Approved Fee")|
+        Q(description="Issuer WDL Approved Fee (Micro-ATM)")
+    )
+    wdl = NTSL.objects.filter(
+        Q(description__in=discrptionNTSL) &
+        Q(date__lte=cldate)
+    ).aggregate(Sum("debit"))
+
+def IssuerFeeTotal(cldate):
+    discrptionNTSL = Description_NTSL.objects.filter(
+        Q(description="Issuer BI Approved Fee") |
+        Q(description="Issuer MS Approved Fee") |
+        Q(description="Issuer WDL Approved Fee") |
+        Q(description="Issuer PC Approved Fee") |
+        Q(description="Issuer WDL Approved Fee (Micro-ATM)")
+    )
+    wdl = NTSL.objects.filter(
+            Q(description__in=discrptionNTSL) &
+            Q(date__lte=cldate)
+    ).aggregate(Sum("debit"))
+    return wdl["debit__sum"]
+
+def IssuerNPCIFeeTotal(cldate):
+    discrptionNTSL = Description_NTSL.objects.filter(
+        Q(description="Issuer BI Approved NPCI Switching Fee") |
+        Q(description="Issuer MS Approved NPCI Switching Fee") |
+        Q(description="Issuer WDL Approved NPCI Switching Fee") |
+        Q(description="Issuer PC Approved NPCI Switching Fee") |
+        Q(description="Issuer WDL Approved NPCI Switching Fee (Micro-ATM)")
+    )
+    wdl = NTSL.objects.filter(
+            Q(description__in=discrptionNTSL) &
+            Q(date__lte=cldate)
+    ).aggregate(Sum("debit"))
+    return wdl["debit__sum"]
+
+def IssuerNPCIFeeGSTTotal(cldate):
+    discrptionNTSL = Description_NTSL.objects.filter(
+        Q(description="Issuer BI Approved NPCI Switching Fee - GST") |
+        Q(description="Issuer MS Approved NPCI Switching Fee - GST") |
+        Q(description="Issuer WDL Approved NPCI Switching Fee - GST") |
+        Q(description="Issuer PC Approved NPCI Switching Fee - GST") |
+        Q(description="Issuer WDL Approved NPCI Switching Fee - GST (Micro-ATM)")
+    )
+    wdl = NTSL.objects.filter(
+            Q(description__in=discrptionNTSL) &
+            Q(date__lte=cldate)
+    ).aggregate(Sum("debit"))
+    return wdl["debit__sum"]
+
+def IssuerFeeGSTTotal(cldate):
+    discrptionNTSL = Description_NTSL.objects.filter(
+        Q(description="Issuer BI Approved Fee - GST")|
+        Q(description="Issuer MS Approved Fee - GST")|
+        Q(description="Issuer WDL Approved Fee - GST")|
+        Q(description="Issuer PC Approved Fee - GST")|
+        Q(description="Issuer WDL Approved Fee - GST (Micro-ATM)")
+        )
+    wdl = NTSL.objects.filter(
+            Q(description__in=discrptionNTSL) &
+            Q(date__lte=cldate)
+        ).aggregate(Sum("debit"))
+    return wdl["debit__sum"]
+
 
 def clbalance(accno,cldate):
     account=Account.objects.filter(number=accno)

@@ -1,22 +1,60 @@
 {% extends 'main.html' %}
 
 {% block content %}
-<div>
-    <h1>Date:- {{date}}</h1>
-    <h1>Axis Bank Balance {{axisbal|floatformat:2}}</h1>
-</div>
+<br/>
+<div class="row">
+    <div class="col-sm">
+        <div class="card">
+            <div class="card-header">
+                <h4>Date:- {{date}}</h4>
+            </div>
+            <div class="card-body">
 
-<div class="card">
-  <div class="card-header">
-    Acquirer
-  </div>
-  <div class="card-body">
-    <h3>Acquirer Entries As Per CBS:- {{acq|floatformat:2}} </h3>
-      <h3>Acquirer Entries as Per NTSL:- {{acqwdlntsl|floatformat:2}}</h3>
-      <h3>Acquirer Differnece:- {{acqdiff|floatformat:2}}</h3>
-  </div>
+                <h3>Axis Bank Balance in CBS {{axisbal|floatformat:2}}</h3>
+                <h3>+Acquirer Fee {{acqfee|floatformat:2}}</h3>
+                <h3>+Acquirer Fee GST {{acqfeegst|floatformat:2}}</h3>
+                <h3>+Issuer Fee  {{issfee|floatformat:2}}</h3>
+                <h3>-Issuer Fee GST  {{issfeegst|floatformat:2}}</h3>
+                <h3>-Issuer NPCI Switching Fee {{issnpciswfee|floatformat:2}}</h3>
+                <h3>-Issuer NPCI Switching Fee GST {{issnpciswfeegst|floatformat:2}}</h3>
+
+            </div>
+        </div>
+    </div>
+    <div class="col-sm">
+           <div class="card">
+            <div class="card-header">
+                <h4>Date:- {{date}}</h4>
+            </div>
+            <div class="card-body">
+                <h3>+Acquirer A/c Closing Balance {{acqclbal|floatformat:2}}</h3>
+                <h3>-Isuuer A/c Closing Balance {{issclbal|floatformat:2}}</h3>
+                <h3>-Other Fee Amount Dr  {{othFeeAmtDr|floatformat:2}}</h3>
+                <h3>-Other Fee GST Amount Dr  {{othFeeGSTAmtDr|floatformat:2}}</h3>
+
+                <hr/>
+                <h3>Adjusted Axis Bank Balance in CBS {{adjustedAxisBankBal|floatformat:2}}</h3>
+
+
+            </div>
+    </div>
 </div>
-<div class="card">
+<hr/>
+<div class="row">
+    <div class="col-sm">
+        <div class="card">
+            <div class="card-header">
+                Acquirer
+            </div>
+        <div class="card-body">
+            <h3>Acquirer Entries As Per CBS:- {{acq|floatformat:2}} </h3>
+            <h3>Acquirer Entries as Per NTSL:- {{acqwdlntsl|floatformat:2}}</h3>
+            <h3>Acquirer Differnece:- {{acqdiff|floatformat:2}}</h3>
+        </div>
+        </div>
+    </div>
+    <div class="col-sm">
+        <div class="card">
   <div class="card-header">
     Issuer
   </div>
@@ -29,7 +67,8 @@
       <h3>Issuer Differnece:- {{issuerdiff|floatformat:2}}</h3>
   </div>
 </div>
-
+    </div>
+</div>
 
 
 {% endblock %}
