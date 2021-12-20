@@ -28,15 +28,17 @@ class TxnType(models.Model):
 
 
 class Transaction(models.Model):
-    txnNo = models.CharField(max_length=25)
+    txnNo = models.AutoField(primary_key=True)
     account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True)
     date = models.DateField()
     drTxn = models.FloatField()
     crTxn = models.FloatField()
-    txnTpe = models.ForeignKey(TxnType, on_delete=models.SET_NULL, null=True)
+    txnType = models.ForeignKey(TxnType, on_delete=models.SET_NULL, null=True)
 
+    class Meta:
+        ordering = ['-txnNo']
     def __str__(self):
-        return self.txnNo
+        return str(self.txnNo)+" "+str(self.date) +" "+self.account.name +" "+str(self.drTxn)+" "+str(self.crTxn)
 
 
 class ReconDate(models.Model):

@@ -5,16 +5,19 @@
 
 <div >
 
-    <div>
+     <table class="table table-striped">
+       <tbody>
         {% for transaction in transactions %}
-            <div>
-                <a href="{% url 'update-transaction' transaction.id%}">Edit</a>
-                <a href="{% url 'delete-transaction' transaction.id%}">Delete</a>
-                <h1>{{transaction}}</h1>
-                <hr>
-            </div>
+            <tr>
+                <td><a href="{% url 'update-transaction' transaction.txnNo%}">Edit</a></td>
+                <td><a href="{% url 'delete-transaction' transaction.txnNo%}">Delete</a></td>
+                <td>{{transaction}}</td>
+
+            </tr>
         {% endfor %}
-    </div>
+
+       </tbody>
+     </table>
 </div>
 
 {% endblock %}

@@ -2,10 +2,29 @@
 
 {% block content %}
   <div>
+    <br/>
     <form method="post" action="">
       {% csrf_token %}
       {{form.as_p}}
       <input type="submit" value="Submit"/>
     </form>
   </div>
+
+<div >
+
+    <div>
+      <table class="table table-striped">
+        <tbody>
+            {% for account in accounts %}
+            <tr>
+              <td><a href="{% url 'update-account' account.id%}">Edit</a></td>
+                <td><a href="{% url 'delete-account' account.id%}">Delete</a></td>
+              <td> {{account}}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+
+    </div>
+</div>
 {% endblock %}

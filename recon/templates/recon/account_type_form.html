@@ -1,11 +1,34 @@
 {% extends 'main.html' %}
 {% block content %}
 <div>
+    <br/>
     <form method="post" action="">
         {% csrf_token %}
         {{form.as_p}}
         <input type="submit" value="Submit"/>
     </form>
 </div>
+<div >
 
+    <div>
+
+            <div>
+                <table class="table table-striped">
+
+                    <tbody>
+                        {% for accounttype in accounttypes %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'update-accounttype' accounttype.id%}">Edit</a></td>
+                            <td><a href="{% url 'delete-accounttype' accounttype.id%}">Delete</a></td>
+                                <td>{{accounttype}}
+                            </td>
+
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+
+    </div>
+</div>
 {% endblock content %}

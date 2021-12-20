@@ -5,16 +5,18 @@
 
 <div >
 
-    <div>
-        {% for accounttype in accounttypes %}
-            <div>
-                <a href="{% url 'update-accounttype' accounttype.id%}">Edit</a>
-                <a href="{% url 'delete-accounttype' accounttype.id%}">Delete</a>
-                <h1>{{accounttype}}</h1>
-                <hr>
-            </div>
+    <table class="table table-striped">
+        <tbody>
+            {% for accounttype in accounttypes %}
+            <tr>
+              <td>  <a href="{% url 'update-accounttype' accounttype.id%}">Edit</a></td>
+                <td><a href="{% url 'delete-accounttype' accounttype.id%}">Delete</a></td>
+                <td>{{accounttype}}</td>
+
+            </tr>
         {% endfor %}
-    </div>
+        </tbody>
+    </table>
 </div>
 
 {% endblock %}

@@ -21,4 +21,5 @@ urlpatterns=[
     path('create-recondate/',views.createRecondate, name='create-recondate'),
     path('recondashboard/',views.ReconDashboard, name='recondashboard'),
     path('loadntslfiles/',views.loadntslfiles, name='loadntslfiles'),
+    path('loadincomingfile/',views.loadincomingfile, name='loadincomingfile'),
 ]

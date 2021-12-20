@@ -2,10 +2,27 @@
 
 {% block content %}
   <div>
+    <br/>
     <form method="post" action="">
       {% csrf_token %}
       {{form.as_p}}
       <input type="submit" value="Submit"/>
     </form>
   </div>
+<div >
+
+      <table class="table table-striped">
+            <tbody>
+                {% for txntype in txntypes %}
+                    <tr>
+                        <td><a href="{% url 'update-txntype' txntype.id%}">Edit</a></td>
+                        <td><a   href="{% url 'delete-txntype' txntype.id%}">Delete</a></td>
+                        <td>{{txntype}}</td>
+                    </tr>
+                {% endfor %}
+
+
+            </tbody>
+        </table>
+</div>
 {% endblock %}

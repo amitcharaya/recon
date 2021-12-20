@@ -1,11 +1,30 @@
 {% extends 'main.html' %}
 
 {% block content %}
-  <div>
+<br/>
+  <div class="form-group">
     <form method="post" action="">
       {% csrf_token %}
       {{form.as_p}}
       <input type="submit" value="Submit"/>
     </form>
   </div>
+<div >
+
+    <table class="table table-striped">
+        <tbody>
+        {% for transaction in transactions %}
+            <tr>
+                <td><a href="{% url 'update-transaction' transaction.txnNo%}">Edit</a></td>
+                <td><a href="{% url 'delete-transaction' transaction.txnNo%}">Delete</a></td>
+                <td>{{transaction}}</td>
+                </tr>
+
+
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+
 {% endblock %}

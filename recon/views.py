@@ -1,9 +1,10 @@
 import pandas as pd
+import xml.dom.minidom
 from datetime import timedelta
 from django.shortcuts import render,redirect
 from django.http import HttpResponseRedirect
 from .models import Account,Transaction,AccountType,TxnType,ReconDate,NTSL,NTSL_Dispute_Adjustments,Description_NTSL,InwardOutward,Status,TransactionType,TransactionCycle,Channel,RGCS
-from .forms import AccountTypeForm,AccountForm,TransactionForm,TxnTypeForm,ReconDateFrom,UploadFileForm
+from .forms import AccountTypeForm,AccountForm,TransactionForm,TxnTypeForm,ReconDateFrom,UploadFileForm,UploadXMLFileForm
 from django.db.models import Q
 from django.db.models import Sum
 from django.templatetags.static import static
@@ -51,6 +52,8 @@ def txntypes(request):
 
 
 def createAccountTYpe(request):
+    accounttypes = AccountType.objects.all()
+
 
     form=AccountTypeForm()
     if request.method=='POST':
@@ -59,17 +62,20 @@ def createAccountTYpe(request):
             form.save()
             return redirect('home')
 
-    context={'form':form}
+    context={'form':form,'accounttypes': accounttypes}
     return render(request, 'recon/account_type_form.html', context)
 
 def createAccount(request):
+    accounts = Account.objects.all()
+
+
     form=AccountForm()
     if request.method=='POST':
         form=AccountForm(request.POST)
         if form.is_valid():
             form.save()
             return redirect('home')
-    context={'form':form}
+    context={'form':form,'accounts': accounts}
     return render(request,'recon/account_form.html',context)
 
 def deleteAccount(request,pk):
@@ -87,7 +93,7 @@ def deleteAccounttype(request,pk):
     return render(request,'recon/delete.html',{'obj':accounttype})
 
 def deleteTransaction(request,pk):
-    transaction = Transaction.objects.get(id=pk)
+    transaction = Transaction.objects.get(txnNo=pk)
     if request.method=='POST':
         transaction.delete()
         return redirect('home')
@@ -118,7 +124,7 @@ def updateAccounttype(request,pk):
     return render(request, 'recon/account_type_form.html', context)
 
 def updateTransaction(request,pk):
-    transaction= Transaction.objects.get(id=pk)
+    transaction= Transaction.objects.get(txnNo=pk)
     form = TransactionForm(instance=transaction)
     if request.method=='POST':
         form=TransactionForm(request.POST,instance=transaction)
@@ -131,23 +137,29 @@ def updateTransaction(request,pk):
 
 
 def createTransaction(request):
+    transactions = Transaction.objects.all()
+
+
     form=TransactionForm()
     if request.method=='POST':
         form=TransactionForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('home')
-    context={'form':form}
+            return redirect('create-transaction')
+    context={'form':form,'transactions': transactions}
     return render(request,'recon/transaction_form.html',context)
 
 def createTxntype(request):
+    txntypes = TxnType.objects.all()
+
+
     form=TxnTypeForm()
     if request.method=='POST':
         form=TxnTypeForm(request.POST)
         if form.is_valid():
             form.save()
             return redirect('home')
-    context={'form':form}
+    context={'form':form,'txntypes': txntypes}
     return render(request,'recon/txntype_form.html',context)
 
 def updateTxnType(request,pk):
@@ -170,9 +182,17 @@ def deleteTxnType(request,pk):
     return render(request,'recon/delete.html',{'obj':txntype})
 
 def createRecondate(request):
-    form=ReconDateFrom()
+    try:
+        recondate=ReconDate.objects.all()[0]
+        form = ReconDateFrom(instance=recondate)
+    except ReconDate.DoesNotExist:
+        form = ReconDateFrom()
+
     if request.method=='POST':
-        form=ReconDateFrom(request.POST)
+        try:
+            form=ReconDateFrom(request.POST,instance=recondate)
+        except UnboundLocalError:
+            form = ReconDateFrom(request.POST)
         if form.is_valid():
             form.save()
             return redirect('home')
@@ -180,25 +200,27 @@ def createRecondate(request):
     return render(request,'recon/recondate_form.html',context)
 
 def MirrorCrEntriesDuringDay():
-    recondate=ReconDate.objects.get(id=1)
+    recondate=ReconDate.objects.all()[0]
     accountType=AccountType.objects.filter(type='Mirror Account')
     account = Account.objects.filter(accountType=accountType[0])
-    transactions=Transaction.objects.filter(account=account[0],date=recondate.date).aggregate(Sum('crTxn'))
+    txnTypeobj=TxnType.objects.filter(type="System")
+    transactions=Transaction.objects.filter(account=account[0],date=recondate.date,txnType__in=txnTypeobj).aggregate(Sum('crTxn'))
     if transactions['crTxn__sum']==None:
         transactions['crTxn__sum']=0
     return transactions['crTxn__sum']
 
 def MirrorDrEntriesDuringDay():
-    recondate=ReconDate.objects.get(id=1)
+    recondate=ReconDate.objects.all()[0]
     accountType=AccountType.objects.filter(type='Mirror Account')
+    txnTypeobj = TxnType.objects.filter(type="System")
     account = Account.objects.filter(accountType=accountType[0])
-    transactions=Transaction.objects.filter(account=account[0],date=recondate.date).aggregate(Sum('drTxn'))
+    transactions=Transaction.objects.filter(account=account[0],date=recondate.date,txnType__in=txnTypeobj).aggregate(Sum('drTxn'))
     if transactions['drTxn__sum']==None:
         transactions['drTxn__sum']=0
     return transactions['drTxn__sum']
 
 def IssuerDrEntriesDuringDay():
-    recondate=ReconDate.objects.get(id=1)
+    recondate=ReconDate.objects.all()[0]
     accountType=AccountType.objects.filter(type='Issuer Account')
     account = Account.objects.filter(accountType=accountType[0])
     transactions=Transaction.objects.filter(account=account[0],date=recondate.date).aggregate(Sum('drTxn'))
@@ -207,7 +229,7 @@ def IssuerDrEntriesDuringDay():
     return transactions['drTxn__sum']
 
 def IssuerCrEntriesDuringDay():
-    recondate=ReconDate.objects.get(id=1)
+    recondate=ReconDate.objects.all()[0]
     accountType=AccountType.objects.filter(type='Issuer Account')
     account = Account.objects.filter(accountType=accountType[0])
     transactions=Transaction.objects.filter(account=account[0],date=recondate.date).aggregate(Sum('crTxn'))
@@ -216,7 +238,7 @@ def IssuerCrEntriesDuringDay():
     return transactions['crTxn__sum']
 
 def AcquirerDrEntriesDuringDay():
-    recondate=ReconDate.objects.get(id=1)
+    recondate=ReconDate.objects.all()[0]
     accountType=AccountType.objects.filter(type='Acquirer Account')
     account = Account.objects.filter(accountType=accountType[0])
     transactions=Transaction.objects.filter(account=account[0],date=recondate.date).aggregate(Sum('drTxn'))
@@ -227,7 +249,7 @@ def AcquirerDrEntriesDuringDay():
 
 
 def AcquirerCrEntriesDuringDay():
-    recondate = ReconDate.objects.get(id=1)
+    recondate = ReconDate.objects.all()[0]
     accountType = AccountType.objects.filter(type='Acquirer Account')
     account = Account.objects.filter(accountType=accountType[0])
     transactions = Transaction.objects.filter(account=account[0], date=recondate.date).aggregate(Sum('crTxn'))
@@ -236,7 +258,7 @@ def AcquirerCrEntriesDuringDay():
     return transactions['crTxn__sum']
 
 def AcquirerEntriesDuringPrvDay():
-    recondate=ReconDate.objects.get(id=1)
+    recondate=ReconDate.objects.all()[0]
     accountType=AccountType.objects.filter(type='Acquirer Account')
     account = Account.objects.filter(accountType=accountType[0])
     drtransactions=Transaction.objects.filter(account=account[0],date=recondate.date-timedelta(hours=24)).aggregate(Sum('drTxn'))
@@ -249,7 +271,7 @@ def AcquirerEntriesDuringPrvDay():
     return drtransactions['drTxn__sum']-crtransactions['crTxn__sum']
 
 def IssuerEntriesDuringPrvDay():
-    recondate=ReconDate.objects.get(id=1)
+    recondate=ReconDate.objects.all()[0]
     accountType=AccountType.objects.filter(type='Issuer Account')
     account = Account.objects.filter(accountType=accountType[0])
     drtransactions=Transaction.objects.filter(account=account[0],date=recondate.date-timedelta(hours=24)).aggregate(Sum('drTxn'))
@@ -266,10 +288,10 @@ def ReconDashboard(request):
     issuer = MirrorCrEntriesDuringDay() +IssuerCrEntriesDuringDay()-IssuerDrEntriesDuringDay()-IssuerEntriesDuringPrvDay()
     acqclbal=AcquirerDrEntriesDuringDay()-AcquirerCrEntriesDuringDay()
     issclbal=IssuerCrEntriesDuringDay()-IssuerDrEntriesDuringDay()
-    recondate = ReconDate.objects.get(id=1)
+    recondate = ReconDate.objects.all()[0]
     accountType = AccountType.objects.filter(type='Mirror Account')
     account = Account.objects.filter(accountType=accountType[0])
-    axisBankBal=clbalance(account[0].number,recondate.date)
+    axisBankBalMirror=clbalance(account[0].number,recondate.date)
     acqwdlntsl=AcqDuringdayNTSL(recondate.date)
     issddntsl=IssuerDuringdayNTSL(recondate.date)
     issddrgcs=IssuerDuringdayRGCS(recondate.date)
@@ -286,9 +308,13 @@ def ReconDashboard(request):
     othFeeAmtDr=othFeeTotalRGCS(recondate.date)
     othFeeGSTAmtDr = othFeeGSTTotalRGCS(recondate.date)
 
-    adjustedAxisBankBal = axisBankBal + acqfee + acqfeegst - issfee - issfeegst - issnpciswfee - issnpciswfeegst + acqclbal - issclbal-othFeeAmtDr-othFeeGSTAmtDr
-
-    context={'acq':acq,'issuer':issuer, 'date':recondate.date,'axisbal':axisBankBal,"acqwdlntsl":acqwdlntsl,"acqdiff":acqdiff,"issddntsl":issddntsl,"issuerdiff":issuerdiff,"issddrgcs":issddrgcs,"issddtotal":issddtotal,"acqfee":acqfee,"acqfeegst":acqfeegst,"issfee":issfee,"issfeegst":issfeegst,"issnpciswfee":issnpciswfee,"issnpciswfeegst":issnpciswfeegst,"adjustedAxisBankBal":adjustedAxisBankBal,"acqclbal":acqclbal,"issclbal":issclbal,"othFeeAmtDr":othFeeAmtDr,"othFeeGSTAmtDr":othFeeGSTAmtDr}
+    accountType = AccountType.objects.filter(type='Axis Bank')
+    accountobj = Account.objects.filter(accountType=accountType[0])
+    print(accountobj)
+    axisBankBal=clbalance(accountobj[0].number,recondate.date)
+    adjustedAxisBankBal = axisBankBalMirror + acqfee + acqfeegst - issfee - issfeegst - issnpciswfee - issnpciswfeegst + acqclbal - issclbal-othFeeAmtDr-othFeeGSTAmtDr
+    diffAxisBank=adjustedAxisBankBal-axisBankBal
+    context={'acq':acq,'issuer':issuer, 'date':recondate.date,'axisbalmirror':axisBankBalMirror,"acqwdlntsl":acqwdlntsl,"acqdiff":acqdiff,"issddntsl":issddntsl,"issuerdiff":issuerdiff,"issddrgcs":issddrgcs,"issddtotal":issddtotal,"acqfee":acqfee,"acqfeegst":acqfeegst,"issfee":issfee,"issfeegst":issfeegst,"issnpciswfee":issnpciswfee,"issnpciswfeegst":issnpciswfeegst,"adjustedAxisBankBal":adjustedAxisBankBal,"acqclbal":acqclbal,"issclbal":issclbal,"othFeeAmtDr":othFeeAmtDr,"othFeeGSTAmtDr":othFeeGSTAmtDr,"axisBankBal":axisBankBal,"diffAxisBank":diffAxisBank}
 
     return render(request,'recon/recon_dashboard.html',context)
 
@@ -301,6 +327,9 @@ def AcqDuringdayNTSL(cldate):
     ).aggregate(Sum("credit"))
 
     return wdl["credit__sum"]
+
+
+
 
 def IssuerDuringdayNTSL(cldate):
     discrptionNTSL=Description_NTSL.objects.filter(
@@ -340,6 +369,10 @@ def IssuerDuringdayRGCS(cldate):
         Q(date=cldate+timedelta(hours=24)) &
         (Q(cycle=1))
     ).aggregate(Sum("setAmtDr"))
+    if wdl["setAmtDr__sum"]==None:
+        wdl["setAmtDr__sum"]=0
+    if wdl1["setAmtDr__sum"]==None:
+        wdl1["setAmtDr__sum"]=0
     return wdl["setAmtDr__sum"]+wdl1["setAmtDr__sum"]
 
 
@@ -501,6 +534,11 @@ def clbalance(accno,cldate):
         Q(account__number=accno) &
         Q(date__lte=cldate)
     ).aggregate(Sum('crTxn'))
+    if drtxn['drTxn__sum'] == None:
+        drtxn['drTxn__sum']=0
+    if crtxn['crTxn__sum'] == None:
+        crtxn['crTxn__sum']=0
+
     return ob+float(drtxn['drTxn__sum'])-float(crtxn['crTxn__sum'])
 
 def prdclbalance(accno,cldate):
@@ -517,6 +555,17 @@ def prdclbalance(accno,cldate):
         Q(date__lt=cldate)
     ).aggregate(Sum('crTxn'))
     return ob+float(drtxn['drTxn__sum'])-float(crtxn['crTxn__sum'])
+
+def loadincomingfile(request):
+    if request.method == 'POST':
+        form = UploadXMLFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            if request.FILES['file1'] is not None:
+                handleincomingfiles(request.FILES['file1'])
+        return redirect('home')
+    else:
+        form = UploadXMLFileForm()
+    return render(request, 'recon/selectincomingfile.html', {'form': form})
 
 def loadntslfiles(request):
     if request.method == 'POST':
@@ -543,6 +592,12 @@ def loadntslfiles(request):
     else:
         form = UploadFileForm()
     return render(request, 'recon/selectntslfile.html', {'form': form})
+
+def handleincomingfiles(file):
+    doc=xml.dom.minidom.parse(file)
+    totalAmt=doc.getElementsByTagName("nRnTtlAmt")
+    print(float(totalAmt[0].firstChild.nodeValue)/100)
+    return float(totalAmt[0].firstChild.nodeValue)/100
 
 def handlentslfiles(file):
 
