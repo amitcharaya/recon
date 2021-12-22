@@ -54,3 +54,7 @@ class StatusResource(ImportExportModelAdmin):
 @admin.register(models.InwardOutward)
 class InwardOutwardResource(ImportExportModelAdmin):
     pass
+
+@admin.register(models.TipandSurcharge)
+class TipandSurchargeResource(ImportExportModelAdmin):
+    pass

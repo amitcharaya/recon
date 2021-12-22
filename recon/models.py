@@ -72,7 +72,7 @@ class NTSL(models.Model):
     nooftxns=models.IntegerField()
     debit = models.FloatField()
     credit = models.FloatField()
-
+    status=models.CharField(max_length=10)
     def __str__(self):
         return str(self.date)+" "+self.cycle +" "+self.description.description
 
@@ -138,6 +138,18 @@ class RGCS(models.Model):
     finalSumCr=models.FloatField(null=True)
     finalSumDr = models.FloatField(null=True)
     finalNet=models.FloatField(null=True)
-
+    postingstatus=models.CharField(max_length=10)
     def __str__(self):
         return str(self.date)+str(self.cycle)
+
+
+class TipandSurcharge(models.Model):
+    class Meta:
+        unique_together = (('date', 'cycle'),)
+    date=models.DateField()
+    cycle=models.CharField(max_length=5)
+    finalAmount =models.FloatField()
+    status=models.CharField(max_length=10)
+
+    def __str__(self):
+        return str(self.date)+" "+ str(self.finalAmount)

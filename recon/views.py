@@ -3,7 +3,7 @@ import xml.dom.minidom
 from datetime import timedelta
 from django.shortcuts import render,redirect
 from django.http import HttpResponseRedirect
-from .models import Account,Transaction,AccountType,TxnType,ReconDate,NTSL,NTSL_Dispute_Adjustments,Description_NTSL,InwardOutward,Status,TransactionType,TransactionCycle,Channel,RGCS
+from .models import Account,Transaction,AccountType,TxnType,ReconDate,NTSL,NTSL_Dispute_Adjustments,Description_NTSL,InwardOutward,Status,TransactionType,TransactionCycle,Channel,RGCS,TipandSurcharge
 from .forms import AccountTypeForm,AccountForm,TransactionForm,TxnTypeForm,ReconDateFrom,UploadFileForm,UploadXMLFileForm
 from django.db.models import Q
 from django.db.models import Sum
@@ -312,9 +312,11 @@ def ReconDashboard(request):
     accountobj = Account.objects.filter(accountType=accountType[0])
     print(accountobj)
     axisBankBal=clbalance(accountobj[0].number,recondate.date)
-    adjustedAxisBankBal = axisBankBalMirror + acqfee + acqfeegst - issfee - issfeegst - issnpciswfee - issnpciswfeegst + acqclbal - issclbal-othFeeAmtDr-othFeeGSTAmtDr
+    tipduringday = TipDuringdayRGCS(recondate.date)
+    adjustedAxisBankBal = axisBankBalMirror + acqfee + acqfeegst - issfee - issfeegst - issnpciswfee - issnpciswfeegst + acqclbal - issclbal-othFeeAmtDr-othFeeGSTAmtDr+tipduringday
     diffAxisBank=adjustedAxisBankBal-axisBankBal
-    context={'acq':acq,'issuer':issuer, 'date':recondate.date,'axisbalmirror':axisBankBalMirror,"acqwdlntsl":acqwdlntsl,"acqdiff":acqdiff,"issddntsl":issddntsl,"issuerdiff":issuerdiff,"issddrgcs":issddrgcs,"issddtotal":issddtotal,"acqfee":acqfee,"acqfeegst":acqfeegst,"issfee":issfee,"issfeegst":issfeegst,"issnpciswfee":issnpciswfee,"issnpciswfeegst":issnpciswfeegst,"adjustedAxisBankBal":adjustedAxisBankBal,"acqclbal":acqclbal,"issclbal":issclbal,"othFeeAmtDr":othFeeAmtDr,"othFeeGSTAmtDr":othFeeGSTAmtDr,"axisBankBal":axisBankBal,"diffAxisBank":diffAxisBank}
+
+    context={'acq':acq,'issuer':issuer, 'date':recondate.date,'axisbalmirror':axisBankBalMirror,"acqwdlntsl":acqwdlntsl,"acqdiff":acqdiff,"issddntsl":issddntsl,"issuerdiff":issuerdiff,"issddrgcs":issddrgcs,"issddtotal":issddtotal,"acqfee":acqfee,"acqfeegst":acqfeegst,"issfee":issfee,"issfeegst":issfeegst,"issnpciswfee":issnpciswfee,"issnpciswfeegst":issnpciswfeegst,"adjustedAxisBankBal":adjustedAxisBankBal,"acqclbal":acqclbal,"issclbal":issclbal,"othFeeAmtDr":othFeeAmtDr,"othFeeGSTAmtDr":othFeeGSTAmtDr,"axisBankBal":axisBankBal,"diffAxisBank":diffAxisBank,"tipduringday":tipduringday}
 
     return render(request,'recon/recon_dashboard.html',context)
 
@@ -375,6 +377,27 @@ def IssuerDuringdayRGCS(cldate):
         wdl1["setAmtDr__sum"]=0
     return wdl["setAmtDr__sum"]+wdl1["setAmtDr__sum"]
 
+def TipDuringdayRGCS(cldate):
+
+
+    wdl=TipandSurcharge.objects.filter(
+
+        (Q(status="Pending"))&
+        Q(date=cldate)&
+        (Q(cycle="POS04")|Q(cycle="POS03")|Q(cycle="POS02"))
+    ).aggregate(Sum("finalAmount"))
+    wdl1 = TipandSurcharge.objects.filter(
+
+        (Q(status="Pending")) &
+        Q(date=cldate+timedelta(hours=24)) &
+        (Q(cycle="POS01"))
+    ).aggregate(Sum("finalAmount"))
+    print(wdl)
+    if wdl["finalAmount__sum"]==None:
+        wdl["finalAmount__sum"]=0
+    if wdl1["finalAmount__sum"]==None:
+        wdl1["finalAmount__sum"]=0
+    return wdl["finalAmount__sum"]+wdl1["finalAmount__sum"]
 
 def othFeeTotalRGCS(cldate):
     statusRGCS=Status.objects.filter(
@@ -398,6 +421,10 @@ def othFeeTotalRGCS(cldate):
         Q(date__lte=cldate+timedelta(hours=24)) &
         (Q(cycle=1))
     ).aggregate(Sum("othFeeAmtDr"))
+    if wdl["othFeeAmtDr__sum"]==None:
+        wdl["othFeeAmtDr__sum"]=0
+    if wdl1["othFeeAmtDr__sum"]==None:
+        wdl1["othFeeAmtDr__sum"]=0
     return wdl["othFeeAmtDr__sum"]+wdl1["othFeeAmtDr__sum"]
 
 def othFeeGSTTotalRGCS(cldate):
@@ -594,10 +621,29 @@ def loadntslfiles(request):
     return render(request, 'recon/selectntslfile.html', {'form': form})
 
 def handleincomingfiles(file):
+    record = TipandSurcharge()
     doc=xml.dom.minidom.parse(file)
+    Hdr=doc.getElementsByTagName("Hdr")[0]
+    nDtSet=Hdr.getElementsByTagName("nDtSet")[0]
+    date=nDtSet.firstChild.nodeValue
+    day = int(date[4:6])
+    month = int(date[2:4])
+    year = int(date[0:2])+ 2000
+    record.date = datetime.datetime(year, month, day)
+
+    nProdCd = Hdr.getElementsByTagName("nProdCd")[0]
+
+    record.cycle=nProdCd.firstChild.nodeValue
+
+
     totalAmt=doc.getElementsByTagName("nRnTtlAmt")
-    print(float(totalAmt[0].firstChild.nodeValue)/100)
-    return float(totalAmt[0].firstChild.nodeValue)/100
+
+    record.finalAmount=float(totalAmt[0].firstChild.nodeValue)/100
+
+    record.status="Pending"
+
+
+    record.save()
 
 def handlentslfiles(file):
 
@@ -653,7 +699,7 @@ def handlentslfiles(file):
                     Q(cycle=record.cycle) &
                     Q(description=record.description)
                 )
-
+                record.status="Pending"
                 if len(recexist)==0:
                     record.save()
 
@@ -869,7 +915,7 @@ def handleRgcsfiles(file):
                 record.finalNet = cell.value
                 if record.finalNet=="":
                     record.finalNet=None
-
+            record.postingstatus = "Pending"
             if  channel  or inwardOutward == "INWARD GST":
                 record.save()
 
