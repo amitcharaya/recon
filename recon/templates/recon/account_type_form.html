@@ -13,21 +13,23 @@
     <div>
 
             <div>
-                <table class="table table-striped">
+                     <table class="table table-striped">
+          <thead>
+                            <th></th>
+                            <th></th>
+                             <th>A/c Type</th>
+                        </thead>
+        <tbody>
+            {% for accounttype in accounttypes %}
+            <tr>
+              <td>  <a href="{% url 'update-accounttype' accounttype.id%}">Edit</a></td>
+                <td><a href="{% url 'delete-accounttype' accounttype.id%}">Delete</a></td>
+                <td>{{accounttype}}</td>
 
-                    <tbody>
-                        {% for accounttype in accounttypes %}
-                        <tr>
-                            <td>
-                                <a href="{% url 'update-accounttype' accounttype.id%}">Edit</a></td>
-                            <td><a href="{% url 'delete-accounttype' accounttype.id%}">Delete</a></td>
-                                <td>{{accounttype}}
-                            </td>
-
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 
     </div>
 </div>

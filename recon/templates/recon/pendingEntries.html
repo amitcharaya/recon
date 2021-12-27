@@ -1,0 +1,35 @@
+
+{% extends 'home.html' %}
+
+{% block sidecontent %}
+
+<t >
+
+   <table class="table table-striped">
+       <thead>
+            <th></th>
+            <th></th>
+
+            <th>Date</th>
+            <th>Debit</th>
+            <th>Credit</th>
+            <th>Discription</th>
+       </thead>
+       <tbody>
+             {% for entry in entries %}
+            <tr>
+               <td> <a href="{% url 'update-entry' entry.id%}">Edit</a></td>
+                <td><a href="{% url 'delete-entry' entry.id%}">Delete</a></td>
+                <td>{{entry.date}}</td>
+                 <td>{{entry.debitAmount}}</td>
+                <td>{{entry.creditAmount}}</td>
+                <td>{{entry.description}}</td>
+
+
+            </tr>
+        {% endfor %}
+       </tbody>
+   </table>
+</div>
+
+{% endblock %}

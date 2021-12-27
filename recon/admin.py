@@ -58,3 +58,7 @@ class InwardOutwardResource(ImportExportModelAdmin):
 @admin.register(models.TipandSurcharge)
 class TipandSurchargeResource(ImportExportModelAdmin):
     pass
+
+@admin.register(models.PendingEntries)
+class PendingEntriesResource(ImportExportModelAdmin):
+    pass

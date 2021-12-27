@@ -21,5 +21,11 @@ urlpatterns=[
     path('create-recondate/',views.createRecondate, name='create-recondate'),
     path('recondashboard/',views.ReconDashboard, name='recondashboard'),
     path('loadntslfiles/',views.loadntslfiles, name='loadntslfiles'),
+    path('loadrgcsfiles/',views.loadrgcsfiles, name='loadrgcsfiles'),
     path('loadincomingfile/',views.loadincomingfile, name='loadincomingfile'),
+    path('createPendingEntries/',views.createPendingEntry, name='createPendingEntries'),
+    path('update-entry/<str:pk>/',views.updateEntry, name='update-entry'),
+    path('delete-entry/<str:pk>/',views.deleteEntry, name='delete-entry'),
+    path('pendingEntries/',views.pendingEntries, name='pendingEntries'),
+    path('pendingEntriesDetail/',views.pendingEntriesDetail, name='pendingEntriesDetail'),
 ]

@@ -12,18 +12,33 @@
 <div >
 
     <table class="table table-striped">
-        <tbody>
+         <thead>
+                <th></th>
+                <th></th>
+                <th>Txn No</th>
+                <th>Date</th>
+                <th>Account</th>
+                <th>Debit</th>
+                <th>Credit</th>
+                <th>Type</th>
+         </thead>
+       <tbody>
         {% for transaction in transactions %}
             <tr>
                 <td><a href="{% url 'update-transaction' transaction.txnNo%}">Edit</a></td>
                 <td><a href="{% url 'delete-transaction' transaction.txnNo%}">Delete</a></td>
-                <td>{{transaction}}</td>
-                </tr>
+                <td>{{transaction.txnNo}}</td>
+                <td>{{transaction.date}}</td>
+                <td>{{transaction.account}}</td>
+                <td>{{transaction.drTxn}}</td>
+                <td>{{transaction.crTxn}}</td>
+                <td>{{transaction.txnType}}</td>
 
-
+            </tr>
         {% endfor %}
-        </tbody>
-    </table>
+
+       </tbody>
+     </table>
     </div>
 </div>
 

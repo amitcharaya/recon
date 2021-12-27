@@ -3,8 +3,8 @@ import xml.dom.minidom
 from datetime import timedelta
 from django.shortcuts import render,redirect
 from django.http import HttpResponseRedirect
-from .models import Account,Transaction,AccountType,TxnType,ReconDate,NTSL,NTSL_Dispute_Adjustments,Description_NTSL,InwardOutward,Status,TransactionType,TransactionCycle,Channel,RGCS,TipandSurcharge
-from .forms import AccountTypeForm,AccountForm,TransactionForm,TxnTypeForm,ReconDateFrom,UploadFileForm,UploadXMLFileForm
+from .models import Account,Transaction,AccountType,TxnType,ReconDate,NTSL,NTSL_Dispute_Adjustments,Description_NTSL,InwardOutward,Status,TransactionType,TransactionCycle,Channel,RGCS,TipandSurcharge,PendingEntries
+from .forms import AccountTypeForm,AccountForm,TransactionForm,TxnTypeForm,ReconDateFrom,UploadFileForm,UploadXMLFileForm,PendingEntryForm,UploadRGCSFileForm1
 from django.db.models import Q
 from django.db.models import Sum
 from django.templatetags.static import static
@@ -27,6 +27,25 @@ def accounts(request):
     context={'accounts':accounts}
 
     return render(request,'recon/accounts.html',context)
+
+def pendingEntries(request):
+
+    entries=PendingEntries.objects.all()
+
+    context={'entries':entries}
+
+    return render(request,'recon/pendingEntries.html',context)
+
+def pendingEntriesDetail(request):
+    cldate=ReconDate.objects.all()
+    entries=PendingEntries.objects.filter(
+        Q(status="Pending")&
+        Q(date__lte=cldate[0].date)
+    )
+
+    context={'entries':entries}
+
+    return render(request,'recon/pendingEntries.html',context)
 
 def accounttypes(request):
 
@@ -64,6 +83,21 @@ def createAccountTYpe(request):
 
     context={'form':form,'accounttypes': accounttypes}
     return render(request, 'recon/account_type_form.html', context)
+
+
+def createPendingEntry(request):
+    pendingEntries = PendingEntries.objects.all()
+
+
+    form=PendingEntryForm()
+    if request.method=='POST':
+        form=PendingEntryForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('home')
+
+    context={'form':form,'entries': pendingEntries}
+    return render(request, 'recon/pending_entries_form.html', context)
 
 def createAccount(request):
     accounts = Account.objects.all()
@@ -111,6 +145,26 @@ def updateAccount(request,pk):
             return redirect('home')
     context = {'form': form}
     return render(request, 'recon/account_form.html', context)
+
+def deleteEntry(request,pk):
+    entry = PendingEntries.objects.get(id=pk)
+    if request.method=='POST':
+        entry.delete()
+        return redirect('home')
+    return render(request,'recon/delete.html',{'obj':entry})
+
+
+
+def updateEntry(request,pk):
+    entry= PendingEntries.objects.get(id=pk)
+    form = PendingEntryForm(instance=entry)
+    if request.method=='POST':
+        form=PendingEntryForm(request.POST,instance=entry)
+        if form.is_valid():
+            form.save()
+            return redirect('home')
+    context = {'form': form}
+    return render(request, 'recon/pending_entries_form.html', context)
 
 def updateAccounttype(request,pk):
     account= AccountType.objects.get(id=pk)
@@ -315,8 +369,8 @@ def ReconDashboard(request):
     tipduringday = TipDuringdayRGCS(recondate.date)
     adjustedAxisBankBal = axisBankBalMirror + acqfee + acqfeegst - issfee - issfeegst - issnpciswfee - issnpciswfeegst + acqclbal - issclbal-othFeeAmtDr-othFeeGSTAmtDr+tipduringday
     diffAxisBank=adjustedAxisBankBal-axisBankBal
-
-    context={'acq':acq,'issuer':issuer, 'date':recondate.date,'axisbalmirror':axisBankBalMirror,"acqwdlntsl":acqwdlntsl,"acqdiff":acqdiff,"issddntsl":issddntsl,"issuerdiff":issuerdiff,"issddrgcs":issddrgcs,"issddtotal":issddtotal,"acqfee":acqfee,"acqfeegst":acqfeegst,"issfee":issfee,"issfeegst":issfeegst,"issnpciswfee":issnpciswfee,"issnpciswfeegst":issnpciswfeegst,"adjustedAxisBankBal":adjustedAxisBankBal,"acqclbal":acqclbal,"issclbal":issclbal,"othFeeAmtDr":othFeeAmtDr,"othFeeGSTAmtDr":othFeeGSTAmtDr,"axisBankBal":axisBankBal,"diffAxisBank":diffAxisBank,"tipduringday":tipduringday}
+    pendingEntriesTotal=PendingEntriesTotal(recondate.date)
+    context={'acq':acq,'issuer':issuer, 'date':recondate.date,'axisbalmirror':axisBankBalMirror,"acqwdlntsl":acqwdlntsl,"acqdiff":acqdiff,"issddntsl":issddntsl,"issuerdiff":issuerdiff,"issddrgcs":issddrgcs,"issddtotal":issddtotal,"acqfee":acqfee,"acqfeegst":acqfeegst,"issfee":issfee,"issfeegst":issfeegst,"issnpciswfee":issnpciswfee,"issnpciswfeegst":issnpciswfeegst,"adjustedAxisBankBal":adjustedAxisBankBal,"acqclbal":acqclbal,"issclbal":issclbal,"othFeeAmtDr":othFeeAmtDr,"othFeeGSTAmtDr":othFeeGSTAmtDr,"axisBankBal":axisBankBal,"diffAxisBank":diffAxisBank,"tipduringday":tipduringday,"pendingEntriesTotal":pendingEntriesTotal}
 
     return render(request,'recon/recon_dashboard.html',context)
 
@@ -548,6 +602,23 @@ def IssuerFeeGSTTotal(cldate):
     return wdl["debit__sum"]
 
 
+def PendingEntriesTotal(cldate):
+
+    wdl = PendingEntries.objects.filter(
+            Q(status="Pending") &
+            Q(date__lte=cldate)
+        ).aggregate(Sum("debitAmount"))
+    wdl1 = PendingEntries.objects.filter(
+        Q(status="Pending") &
+        Q(date__lte=cldate)
+    ).aggregate(Sum("creditAmount"))
+
+    if wdl["debitAmount__sum"]==None:
+        wdl["debitAmount__sum"]=0
+    if wdl1["creditAmount__sum"]==None:
+        wdl1["creditAmount__sum"]=0
+    return wdl1["creditAmount__sum"]-wdl["debitAmount__sum"]
+
 def clbalance(accno,cldate):
     account=Account.objects.filter(number=accno)
     ob=(account[0].openingBalance)
@@ -606,6 +677,18 @@ def loadntslfiles(request):
                 handlentslfiles(request.FILES['file3'])
             if request.FILES['file4'] is not None:
                 handlentslfiles(request.FILES['file4'])
+
+            return redirect('home')
+
+    else:
+        form = UploadFileForm()
+    return render(request, 'recon/selectntslfile.html', {'form': form})
+
+def loadrgcsfiles(request):
+    if request.method == 'POST':
+        form = UploadRGCSFileForm1(request.POST, request.FILES)
+        if form.is_valid():
+
             if request.FILES['rgcsFile1'] is not None:
                 handleRgcsfiles(request.FILES['rgcsFile1'])
             if request.FILES['rgcsFile2'] is not None:
@@ -617,9 +700,8 @@ def loadntslfiles(request):
             return redirect('home')
 
     else:
-        form = UploadFileForm()
+        form = UploadRGCSFileForm1()
     return render(request, 'recon/selectntslfile.html', {'form': form})
-
 def handleincomingfiles(file):
     record = TipandSurcharge()
     doc=xml.dom.minidom.parse(file)

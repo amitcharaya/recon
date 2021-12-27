@@ -153,3 +153,15 @@ class TipandSurcharge(models.Model):
 
     def __str__(self):
         return str(self.date)+" "+ str(self.finalAmount)
+
+
+class PendingEntries(models.Model):
+    date=models.DateField()
+    debitAmount = models.FloatField()
+    creditAmount = models.FloatField()
+    adjustmentDate = models.DateField(null=True,blank=True)
+    description = models.CharField(max_length=100)
+    status=models.CharField(max_length=10)
+    def __str__(self):
+        return str(self.date) + " " + str(self.debitAmount) + " " +str(self.creditAmount)+" "+str(self.description)
+

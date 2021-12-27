@@ -7,13 +7,23 @@
 
    <table class="table table-striped">
        <tbody>
+                <th></th>
+                <th></th>
+                <th>A/c No.</th>
+                <th>A/c Name</th>
+                <th>Opening Balance</th>
+                <th>Date</th>
+                <th>A/c Type</th>
+
              {% for account in accounts %}
             <tr>
                <td> <a href="{% url 'update-account' account.id%}">Edit</a></td>
                 <td><a href="{% url 'delete-account' account.id%}">Delete</a></td>
-                <td>{{account}}</td>
-                <td>{{txn}}</td>
-                <td>{{bal}}</td>
+                <td>{{account.number}}</td>
+                <td>{{account.name}}</td>
+                <td>{{account.openingBalance}}</td>
+                <td>{{account.date}}</td>
+                <td>{{account.accountType}}</td>
 
             </tr>
         {% endfor %}

@@ -1,8 +1,9 @@
 from django.forms import ModelForm
-from .models import AccountType,Account,Transaction,TxnType,ReconDate
+from .models import AccountType,Account,Transaction,TxnType,ReconDate,PendingEntries
 from django import forms
 class DateInput(forms.DateInput):
     input_type = 'date'
+
 class AccountTypeForm(ModelForm):
     class Meta:
         model=AccountType
@@ -38,13 +39,26 @@ class ReconDateFrom(ModelForm):
         widgets = {
             'date': DateInput(),
         }
+class PendingEntryForm(ModelForm):
+    class Meta:
+        model = PendingEntries
+        fields = '__all__'
+
+        widgets = {
+            'date': DateInput(),
+            'adjustmentDate': DateInput(),
+        }
+
 class UploadFileForm(forms.Form):
     file1 = forms.FileField()
     file2 = forms.FileField()
     file3 = forms.FileField()
     file4 = forms.FileField()
 
-    rgcsFile1=forms.FileField()
+
+
+class UploadRGCSFileForm1(forms.Form):
+    rgcsFile1 = forms.FileField()
     rgcsFile2 = forms.FileField()
     rgcsFile3 = forms.FileField()
     rgcsFile4 = forms.FileField()

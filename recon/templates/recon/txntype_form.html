@@ -12,11 +12,16 @@
 <div >
 
       <table class="table table-striped">
+              <thead>
+                            <th></th>
+                            <th></th>
+                             <th>Transaction Type</th>
+                        </thead>
             <tbody>
                 {% for txntype in txntypes %}
                     <tr>
                         <td><a href="{% url 'update-txntype' txntype.id%}">Edit</a></td>
-                        <td><a   href="{% url 'delete-txntype' txntype.id%}">Delete</a></td>
+                        <td><a href="{% url 'delete-txntype' txntype.id%}">Delete</a></td>
                         <td>{{txntype}}</td>
                     </tr>
                 {% endfor %}
