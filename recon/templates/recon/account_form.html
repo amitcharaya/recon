@@ -1,19 +1,32 @@
 {% extends 'main.html' %}
 
 {% block content %}
-  <div>
+  <div class="">
     <br/>
-    <form method="post" action="">
+    <form method="post" action="" class="row g-3">
       {% csrf_token %}
-      {{form.as_p}}
-      <input type="submit" value="Submit"/>
+
+            <div class="col-md-2 text-end">{{form.number.label}}:</div>
+            <div class="col-md-10 float-left">{{form.number}}</div>
+            <div class="col-md-2 text-end">{{form.name.label}}:</div>
+            <div class="col-md-10">{{form.name}}</div>
+            <div class="col-md-2 text-end">{{form.openingBalance.label}}:</div>
+            <div class="col-md-10">{{form.openingBalance}}</div>
+            <div class="col-md-2 text-end">{{form.date.label}}:</div>
+            <div class="col-md-10">{{form.date}}</div>
+            <div class="col-md-2 text-end">{{form.accountType.label}}:</div>
+            <div class="col-md-10">{{form.accountType}}</div>
+
+
+        <div class="col-md-2"></div>
+        <div class="col-md-10"><button type="submit" class="btn btn-primary btn-customized" >Submit</button></div>
     </form>
   </div>
-
+<hr/>
 <div >
 
     <div>
-       <table class="table table-striped">
+       <table class="table ">
        <tbody>
                 <th></th>
                 <th></th>

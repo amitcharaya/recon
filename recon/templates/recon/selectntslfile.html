@@ -3,10 +3,19 @@
 {% block content %}
 <br/>
   <div>
-    <form method="post" action="" enctype="multipart/form-data">
+    <form method="post" action="" enctype="multipart/form-data" class="row g-3">
       {% csrf_token %}
-      {{form.as_p}}
-      <input type="submit" value="Submit"/>
+        <div class="col-md-2 text-end">{{form.file1.label}}</div>
+        <div class="col-md-10">{{form.file1}}</div>
+       <div class="col-md-2 text-end">{{form.file2.label}}</div>
+        <div class="col-md-10">{{form.file2}}</div>
+       <div class="col-md-2 text-end">{{form.file3.label}}</div>
+        <div class="col-md-10">{{form.file3}}</div>
+       <div class="col-md-2 text-end">{{form.file4.label}}</div>
+        <div class="col-md-10">{{form.file4}}</div>
+        <div class="col-md-2 text-end"></div>
+        <div class="col-md-10"><button type="submit" class="btn btn-primary btn-customized">Submit</button></div>
+
     </form>
   </div>
 {% endblock %}

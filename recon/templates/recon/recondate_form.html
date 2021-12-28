@@ -3,10 +3,13 @@
 {% block content %}
   <div>
     <br/>
-    <form method="post" action="">
+    <form method="post" action="" class="row g-3">
       {% csrf_token %}
-      {{form.as_p}}
-      <input type="submit" value="Submit"/>
+      <div class="col-md-2 text-end">{{form.date.label}}</div>
+        <div class="col-md-10">{{form.date}}</div>
+        <div class="col-md-2 text-end"></div>
+        <div class="col-md-10"><button type="submit" class="btn btn-primary btn-customized">Submit</button></div>
+
     </form>
   </div>
 {% endblock %}

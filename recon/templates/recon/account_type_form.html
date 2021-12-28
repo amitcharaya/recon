@@ -2,18 +2,22 @@
 {% block content %}
 <div>
     <br/>
-    <form method="post" action="">
+    <form method="post" action="" class="row g-3">
         {% csrf_token %}
-        {{form.as_p}}
-        <input type="submit" value="Submit"/>
+        <div class="col-md-2 text-end">{{form.type.label}}:</div>
+        <div class="col-md-10">{{form.type}}</div>
+        <div class="col-md-2"></div>
+        <div class="col-md-10"><button type="submit" class="btn btn-primary btn-customized">Submit</button></div>
+
     </form>
 </div>
+<hr/>
 <div >
 
     <div>
 
             <div>
-                     <table class="table table-striped">
+                     <table class="table ">
           <thead>
                             <th></th>
                             <th></th>
@@ -27,7 +31,7 @@
                 <td>{{accounttype}}</td>
 
             </tr>
-        {% endfor %}
+            {% endfor %}
         </tbody>
     </table>
 

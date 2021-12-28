@@ -107,6 +107,8 @@ class Channel(models.Model):
         return self.channel
 
 class RGCS(models.Model):
+    class Meta:
+        unique_together = (('date', 'cycle', 'inwardOutward','status','transactionCycle','transactionType','channel'),)
     date=models.DateField(null=True)
     cycle=models.CharField(max_length=1)
     productName=models.CharField(max_length=50)

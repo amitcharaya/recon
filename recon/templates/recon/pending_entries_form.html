@@ -3,17 +3,31 @@
 {% block content %}
   <div>
     <br/>
-    <form method="post" action="">
+    <form method="post" action="" class="row g-3">
       {% csrf_token %}
-      {{form.as_p}}
-      <input type="submit" value="Submit"/>
+        <div class="col-md-2 text-end">{{form.date.label}}</div>
+        <div class="col-md-10">{{form.date}}</div>
+
+        <div class="col-md-2 text-end">{{form.debitAmount.label}}</div>
+        <div class="col-md-10">{{form.debitAmount}}</div>
+        <div class="col-md-2 text-end">{{form.creditAmount.label}}</div>
+        <div class="col-md-10">{{form.creditAmount}}</div>
+        <div class="col-md-2 text-end">{{form.adjustmentDate.label}}</div>
+        <div class="col-md-10">{{form.adjustmentDate}}</div>
+        <div class="col-md-2 text-end">{{form.description.label}}</div>
+        <div class="col-md-10">{{form.description}}</div>
+        <div class="col-md-2 text-end">{{form.status.label}}</div>
+        <div class="col-md-10">{{form.status}}</div>
+        <div class="col-md-2 text-end"></div>
+        <div class="col-md-10"><button type="submit" class="btn btn-primary btn-customized">Submit</button></div>
+
     </form>
   </div>
-
+<hr/>
 <div >
 
     <div>
-      <table class="table table-striped">
+      <table class="table ">
        <thead>
             <th></th>
             <th></th>

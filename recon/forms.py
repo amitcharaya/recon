@@ -10,12 +10,27 @@ class AccountTypeForm(ModelForm):
         fields='__all__'
 
 class AccountForm(ModelForm):
+
     class Meta:
         model = Account
         fields = '__all__'
         widgets = {
             'date': DateInput(),
         }
+        labels = {
+            'number':'Account Number',
+            'name': 'Account Name',
+            'openingBalance':'Opening Balance',
+            'date':'Date',
+            'accountType':'Account Type'
+        }
+
+        error_messages = {
+            'name': {
+                'max_length': "Account name is too long.",
+            },
+        }
+
 
 
 class TransactionForm(ModelForm):
@@ -25,6 +40,13 @@ class TransactionForm(ModelForm):
         fields = '__all__'
         widgets = {
             'date': DateInput(),
+        }
+
+        labels = {
+            'drTxn': 'Debit Amount',
+            'crTxn': 'Credit Amount',
+            'txnType': 'Type',
+
         }
 class TxnTypeForm(ModelForm):
     class Meta:
@@ -48,20 +70,27 @@ class PendingEntryForm(ModelForm):
             'date': DateInput(),
             'adjustmentDate': DateInput(),
         }
+        labels = {
+            'debitAmount': 'Debit Amount',
+            'creditAmount': 'Credit Amount',
+            'adjustmentDate': 'Adjustment Date',
+
+        }
 
 class UploadFileForm(forms.Form):
-    file1 = forms.FileField()
-    file2 = forms.FileField()
-    file3 = forms.FileField()
-    file4 = forms.FileField()
+    file1 = forms.FileField(label='Cycle 1')
+    file2 = forms.FileField(label='Cycle 2')
+    file3 = forms.FileField(label='Cycle 3')
+    file4 = forms.FileField(label='Cycle 4')
+
 
 
 
 class UploadRGCSFileForm1(forms.Form):
-    rgcsFile1 = forms.FileField()
-    rgcsFile2 = forms.FileField()
-    rgcsFile3 = forms.FileField()
-    rgcsFile4 = forms.FileField()
+    file1 = forms.FileField(label='Cycle 2 Same Day')
+    file2 = forms.FileField(label='Cycle 3 Same Day')
+    file3 = forms.FileField(label='Cycle 4 Same Day')
+    file4 = forms.FileField(label='Cycle 1 Next Day')
 
 class UploadXMLFileForm(forms.Form):
-    file1 = forms.FileField()
+    file1 = forms.FileField(label='Incoming File')

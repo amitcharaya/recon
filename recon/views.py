@@ -1,3 +1,4 @@
+from django.contrib import messages
 import pandas as pd
 import xml.dom.minidom
 from datetime import timedelta
@@ -5,6 +6,7 @@ from django.shortcuts import render,redirect
 from django.http import HttpResponseRedirect
 from .models import Account,Transaction,AccountType,TxnType,ReconDate,NTSL,NTSL_Dispute_Adjustments,Description_NTSL,InwardOutward,Status,TransactionType,TransactionCycle,Channel,RGCS,TipandSurcharge,PendingEntries
 from .forms import AccountTypeForm,AccountForm,TransactionForm,TxnTypeForm,ReconDateFrom,UploadFileForm,UploadXMLFileForm,PendingEntryForm,UploadRGCSFileForm1
+from django.contrib.auth.models import User
 from django.db.models import Q
 from django.db.models import Sum
 from django.templatetags.static import static
@@ -12,7 +14,10 @@ from django.conf import settings
 import os
 import xlrd
 import datetime
-# Create your views here.
+from django.contrib.auth import authenticate,login,logout
+from django.contrib.auth.decorators import login_required
+
+@login_required
 def home(request):
     transactions = Transaction.objects.all()
     accounts=Account.objects.all()
@@ -20,6 +25,32 @@ def home(request):
     context={'accounts':accounts,'transactions':transactions}
     return render(request,'home.html',context)
 
+
+def logoutuser(request):
+    logout(request)
+    return redirect('login')
+
+def loginpage(request):
+    if request.method=="POST":
+        username=request.POST.get('username')
+        password = request.POST.get('password')
+        try:
+            user=User.objects.get(username=username)
+
+        except:
+            messages.error(request, 'User does not exist')
+        user=authenticate(request,username=username,password=password)
+        if user is not None:
+            login(request,user)
+            return redirect('home')
+        else:
+            messages.error(request, 'Username or password incorrect')
+
+
+    context = {}
+    return render(request, 'recon/login.html', context)
+
+@login_required
 def accounts(request):
 
     accounts=Account.objects.all()
@@ -28,6 +59,7 @@ def accounts(request):
 
     return render(request,'recon/accounts.html',context)
 
+@login_required
 def pendingEntries(request):
 
     entries=PendingEntries.objects.all()
@@ -36,6 +68,7 @@ def pendingEntries(request):
 
     return render(request,'recon/pendingEntries.html',context)
 
+@login_required
 def pendingEntriesDetail(request):
     cldate=ReconDate.objects.all()
     entries=PendingEntries.objects.filter(
@@ -47,6 +80,7 @@ def pendingEntriesDetail(request):
 
     return render(request,'recon/pendingEntries.html',context)
 
+@login_required
 def accounttypes(request):
 
     accounttypes = AccountType.objects.all()
@@ -54,6 +88,7 @@ def accounttypes(request):
     context = {'accounttypes': accounttypes}
     return render(request, 'recon/account_types.html', context)
 
+@login_required
 def transactions(request):
 
     transactions = Transaction.objects.all()
@@ -61,7 +96,7 @@ def transactions(request):
     context = {'transactions': transactions}
     return render(request, 'recon/transactions.html', context)
 
-
+@login_required
 def txntypes(request):
 
     txntypes = TxnType.objects.all()
@@ -69,7 +104,7 @@ def txntypes(request):
     context = {'txntypes': txntypes}
     return render(request, 'recon/transaction_types.html', context)
 
-
+@login_required
 def createAccountTYpe(request):
     accounttypes = AccountType.objects.all()
 
@@ -84,7 +119,7 @@ def createAccountTYpe(request):
     context={'form':form,'accounttypes': accounttypes}
     return render(request, 'recon/account_type_form.html', context)
 
-
+@login_required
 def createPendingEntry(request):
     pendingEntries = PendingEntries.objects.all()
 
@@ -98,7 +133,7 @@ def createPendingEntry(request):
 
     context={'form':form,'entries': pendingEntries}
     return render(request, 'recon/pending_entries_form.html', context)
-
+@login_required
 def createAccount(request):
     accounts = Account.objects.all()
 
@@ -111,21 +146,21 @@ def createAccount(request):
             return redirect('home')
     context={'form':form,'accounts': accounts}
     return render(request,'recon/account_form.html',context)
-
+@login_required
 def deleteAccount(request,pk):
     account = Account.objects.get(id=pk)
     if request.method=='POST':
         account.delete()
         return redirect('home')
     return render(request,'recon/delete.html',{'obj':account})
-
+@login_required
 def deleteAccounttype(request,pk):
     accounttype = AccountType.objects.get(id=pk)
     if request.method=='POST':
         accounttype.delete()
         return redirect('home')
     return render(request,'recon/delete.html',{'obj':accounttype})
-
+@login_required
 def deleteTransaction(request,pk):
     transaction = Transaction.objects.get(txnNo=pk)
     if request.method=='POST':
@@ -134,7 +169,7 @@ def deleteTransaction(request,pk):
     return render(request,'recon/delete.html',{'obj':transaction})
 
 
-
+@login_required
 def updateAccount(request,pk):
     account= Account.objects.get(id=pk)
     form = AccountForm(instance=account)
@@ -145,7 +180,7 @@ def updateAccount(request,pk):
             return redirect('home')
     context = {'form': form}
     return render(request, 'recon/account_form.html', context)
-
+@login_required
 def deleteEntry(request,pk):
     entry = PendingEntries.objects.get(id=pk)
     if request.method=='POST':
@@ -154,7 +189,7 @@ def deleteEntry(request,pk):
     return render(request,'recon/delete.html',{'obj':entry})
 
 
-
+@login_required
 def updateEntry(request,pk):
     entry= PendingEntries.objects.get(id=pk)
     form = PendingEntryForm(instance=entry)
@@ -165,7 +200,7 @@ def updateEntry(request,pk):
             return redirect('home')
     context = {'form': form}
     return render(request, 'recon/pending_entries_form.html', context)
-
+@login_required
 def updateAccounttype(request,pk):
     account= AccountType.objects.get(id=pk)
     form = AccountTypeForm(instance=account)
@@ -176,7 +211,7 @@ def updateAccounttype(request,pk):
             return redirect('home')
     context = {'form': form}
     return render(request, 'recon/account_type_form.html', context)
-
+@login_required
 def updateTransaction(request,pk):
     transaction= Transaction.objects.get(txnNo=pk)
     form = TransactionForm(instance=transaction)
@@ -189,7 +224,7 @@ def updateTransaction(request,pk):
     return render(request, 'recon/transaction_form.html', context)
 
 
-
+@login_required
 def createTransaction(request):
     transactions = Transaction.objects.all()
 
@@ -202,7 +237,7 @@ def createTransaction(request):
             return redirect('create-transaction')
     context={'form':form,'transactions': transactions}
     return render(request,'recon/transaction_form.html',context)
-
+@login_required
 def createTxntype(request):
     txntypes = TxnType.objects.all()
 
@@ -215,7 +250,7 @@ def createTxntype(request):
             return redirect('home')
     context={'form':form,'txntypes': txntypes}
     return render(request,'recon/txntype_form.html',context)
-
+@login_required
 def updateTxnType(request,pk):
     txntype= TxnType.objects.get(id=pk)
     form = TxnTypeForm(instance=txntype)
@@ -227,14 +262,14 @@ def updateTxnType(request,pk):
     context = {'form': form}
     return render(request, 'recon/txntype_form.html', context)
 
-
+@login_required
 def deleteTxnType(request,pk):
     txntype = TxnType.objects.get(id=pk)
     if request.method=='POST':
         txntype.delete()
         return redirect('home')
     return render(request,'recon/delete.html',{'obj':txntype})
-
+@login_required
 def createRecondate(request):
     try:
         recondate=ReconDate.objects.all()[0]
@@ -336,7 +371,7 @@ def IssuerEntriesDuringPrvDay():
     if crtransactions['crTxn__sum']==None:
         crtransactions['crTxn__sum']=0
     return crtransactions['crTxn__sum']-drtransactions['drTxn__sum']
-
+@login_required
 def ReconDashboard(request):
     acq=MirrorDrEntriesDuringDay()+AcquirerDrEntriesDuringDay()-AcquirerCrEntriesDuringDay()-AcquirerEntriesDuringPrvDay()
     issuer = MirrorCrEntriesDuringDay() +IssuerCrEntriesDuringDay()-IssuerDrEntriesDuringDay()-IssuerEntriesDuringPrvDay()
@@ -349,7 +384,13 @@ def ReconDashboard(request):
     acqwdlntsl=AcqDuringdayNTSL(recondate.date)
     issddntsl=IssuerDuringdayNTSL(recondate.date)
     issddrgcs=IssuerDuringdayRGCS(recondate.date)
+    if issddntsl==None:
+        issddntsl=0
+    if issddrgcs==None:
+        issddrgcs=0
     issddtotal=issddntsl+issddrgcs
+    if acqwdlntsl==None:
+        acqwdlntsl=0
     acqdiff=acq-acqwdlntsl
     issuerdiff=issuer-issddntsl-issddrgcs
     acqfee=AcquirerFeeTotal(recondate.date)
@@ -375,10 +416,13 @@ def ReconDashboard(request):
     return render(request,'recon/recon_dashboard.html',context)
 
 def AcqDuringdayNTSL(cldate):
-    discrptionNTSL=Description_NTSL.objects.filter(description="Acquirer WDL Transaction Amount")
+    discrptionNTSL = Description_NTSL.objects.filter(
+        Q(description="Acquirer WDL Transaction Amount") |
+        Q(description="Acquirer WDL Transaction Amount (Micro-ATM)")
+    )
 
     wdl=NTSL.objects.filter(
-        Q(description=discrptionNTSL[0]) &
+        Q(description__in=discrptionNTSL) &
         Q(date=cldate)
     ).aggregate(Sum("credit"))
 
@@ -395,8 +439,8 @@ def IssuerDuringdayNTSL(cldate):
 
     wdl=NTSL.objects.filter(
         (
-            Q(description=discrptionNTSL[0])|
-            Q(description=discrptionNTSL[1])
+            Q(description__in=discrptionNTSL)
+
          ) &
         Q(date=cldate)
     ).aggregate(Sum("debit"))
@@ -653,7 +697,7 @@ def prdclbalance(accno,cldate):
         Q(date__lt=cldate)
     ).aggregate(Sum('crTxn'))
     return ob+float(drtxn['drTxn__sum'])-float(crtxn['crTxn__sum'])
-
+@login_required
 def loadincomingfile(request):
     if request.method == 'POST':
         form = UploadXMLFileForm(request.POST, request.FILES)
@@ -664,7 +708,7 @@ def loadincomingfile(request):
     else:
         form = UploadXMLFileForm()
     return render(request, 'recon/selectincomingfile.html', {'form': form})
-
+@login_required
 def loadntslfiles(request):
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
@@ -683,7 +727,7 @@ def loadntslfiles(request):
     else:
         form = UploadFileForm()
     return render(request, 'recon/selectntslfile.html', {'form': form})
-
+@login_required
 def loadrgcsfiles(request):
     if request.method == 'POST':
         form = UploadRGCSFileForm1(request.POST, request.FILES)
@@ -999,7 +1043,18 @@ def handleRgcsfiles(file):
                     record.finalNet=None
             record.postingstatus = "Pending"
             if  channel  or inwardOutward == "INWARD GST":
-                record.save()
+                recexist = RGCS.objects.filter(
+                    Q(date=record.date) &
+                    Q(cycle=record.cycle) &
+                    Q(inwardOutward=record.inwardOutward) &
+                    Q(status=record.status) &
+                    Q(transactionCycle=record.transactionCycle) &
+                    Q(transactionType=record.transactionType) &
+                    Q(channel=record.channel)
+
+                )
+                if len(recexist) == 0:
+                    record.save()
 
 
 
